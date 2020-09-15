@@ -9,4 +9,5 @@
  <p class="date">Опубликовано {{ post.publish }} автором {{ post.author }}</p>
  {{ post.body|truncatewords:30|linebreaks }}
  {% endfor %}
+ {% include "blog/pagination.html" with page=posts %}
 {% endblock %}

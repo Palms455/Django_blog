@@ -7,4 +7,28 @@
 <p>
  <a href="{% url "blog:post_share" post.id %}">Поделиться постом</a>
 </p>
+{% with comments.count as total_comments %}
+ <h2>{{ total_comments }} комментов {{ total_comments|pluralize }}</h2>
+{% endwith %}
+{% for comment in comments %}
+ <div class="comment">
+ <p class="info">
+ Комментарий {{ forloop.counter }} пользователя  {{ comment.name }}
+ {{ comment.created }}
+ </p>
+ {{ comment.body|linebreaks }}
+ </div>
+{% empty %}
+ <p>Пока еще нет комментов.</p>
+{% endfor %}
+{% if new_comment %}
+ <h2>Коммент добавлен.</h2>
+{% else %}
+ <h2>Прокомментировать</h2>
+ <form action="." method="post">
+ {{ comment_form.as_p }}
+ {% csrf_token %}
+ <p><input type="submit" value="Add comment"></p>
+ </form>
+{% endif %}
 {% endblock %}

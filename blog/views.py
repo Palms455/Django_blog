@@ -55,11 +55,12 @@ def post_detail(request, year, month, day, post):
         comment_form = CommentForm()
 
     # Формирование списка похожих статей.
-    post_tags_ids = post.tags.values_list('id', flat=True)
+    post_tags_ids = post.tags.values_list('id', flat=True) #список id тегов flat=True - плоский список
     similar_posts = Post.published.filter(tags__in=post_tags_ids) \
-        .exclude(id=post.id)
+        .exclude(id=post.id) # получение всех постов с такими тегами, исключая текущий пост
     similar_posts = similar_posts.annotate(same_tags=Count('tags')) \
                         .order_by('-same_tags', '-publish')[:4]
+    # аггрегация Count для формирования поля same_tags + сортировка в убыв порядке по кол-ву совпад тегов
     return render(request, 'blog/post/detail.html', {'post' : post,
                                                      'comments' : comments,
                                                      'new_comment' : new_comment,

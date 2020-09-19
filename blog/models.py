@@ -23,7 +23,7 @@ class Post(models.Model):
     slug = models.SlugField(max_length=250, unique_for_date='publish')
     author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='blog_posts', verbose_name='Автор')
     body = models.TextField(verbose_name='Тело поста')
-    publish = models.DateTimeField(default=timezone.now(), verbose_name='Дата публикации')
+    publish = models.DateTimeField(default=timezone.now, verbose_name='Дата публикации')
     created = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
     updated = models.DateTimeField(auto_now=True, verbose_name='Дата обновления')
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='draft', verbose_name='Статус публикации')

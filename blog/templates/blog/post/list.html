@@ -1,4 +1,5 @@
 {% extends "blog/base.html" %}
+{% load blog_tags %}
 {% block title %}Очередной бложик{% endblock %}
 {% block content %}
  <h1>Мой личный приличный блог</h1>
@@ -12,7 +13,7 @@
  <h2>
  <a href="{{ post.get_absolute_url }}">{{ post.title }}</a>
  </h2>
-{{ post.body|truncatewords:30|linebreaks }}
+{{ post.body|markdown|truncatewords:30 }}
  Теги:
  {% for tag in post.tags.all %}
  <a href="{% url "blog:post_list_by_tag" tag.slug %}">

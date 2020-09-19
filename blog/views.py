@@ -1,5 +1,6 @@
 from django.shortcuts import render, get_object_or_404
 from .models import Post, Comment
+from taggit.models import Tag
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.views.generic import ListView
 from .forms import EmailPostForm, CommentForm
@@ -8,17 +9,22 @@ from django.core.mail import send_mail
 
 # Create your views here.
 
-# def post_list(request):
-#     obj_list = Post.published.all()
-#     paginator = Paginator(obj_list, 3) #разбивка по кол-ву статей на странице
-#     page = request.GET.get('page')
-#     try:
-#         posts = paginator.page(page)
-#     except PageNotAnInteger:
-#         posts = paginator.page(1)
-#     except EmptyPage:
-#         posts = paginator.page(paginator.num_pages)
-#     return render(request, 'blog/post/list.html', {'page': page, 'posts': posts})
+def post_list(request, tag_slug=None):
+    obj_list = Post.published.all()
+    tag = None
+    if tag_slug:
+        # вывод постов по тегам
+        tag = get_object_or_404(Tag, slug=tag_slug)
+        obj_list = obj_list.filter(tags__in=[tag])
+    paginator = Paginator(obj_list, 3) #разбивка по кол-ву статей на странице
+    page = request.GET.get('page')
+    try:
+        posts = paginator.page(page)
+    except PageNotAnInteger:
+        posts = paginator.page(1)
+    except EmptyPage:
+        posts = paginator.page(paginator.num_pages)
+    return render(request, 'blog/post/list.html', {'page': page, 'posts': posts, 'tag': tag})
 
 class PosrListView(ListView):
     queryset = Post.published.all()  # или model = Post
@@ -54,6 +60,7 @@ def post_detail(request, year, month, day, post):
 
 
 def post_share(request, post_id):
+    # поделиться постом
     post = get_object_or_404(Post, id=post_id, status='published')
     if request.method == "POST":
         # сохранение формы

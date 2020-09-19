@@ -1,5 +1,7 @@
 from django.shortcuts import render, get_object_or_404
 from .models import Post, Comment
+from django.db.models import Count
+# функция аггрегации + Avg - сред, Max, Min
 from taggit.models import Tag
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.views.generic import ListView
@@ -49,19 +51,27 @@ def post_detail(request, year, month, day, post):
             new_comment.post = post
             # сохранение в бд
             new_comment.save()
-        else:
-            comment_form = CommentForm()
-        return render(request, 'blog/post/detail.html', {'post': post,
-                                                     'new_comment': new_comment,
-                                                     'comment_form': comment_form})
+    else:
+        comment_form = CommentForm()
+
+    # Формирование списка похожих статей.
+    post_tags_ids = post.tags.values_list('id', flat=True)
+    similar_posts = Post.published.filter(tags__in=post_tags_ids) \
+        .exclude(id=post.id)
+    similar_posts = similar_posts.annotate(same_tags=Count('tags')) \
+                        .order_by('-same_tags', '-publish')[:4]
     return render(request, 'blog/post/detail.html', {'post' : post,
-                                                    'new_comment' : new_comment})
+                                                     'comments' : comments,
+                                                     'new_comment' : new_comment,
+                                                     'comment_form' : comment_form,
+                                                     'similar_posts': similar_posts})
 
 
 
 def post_share(request, post_id):
     # поделиться постом
     post = get_object_or_404(Post, id=post_id, status='published')
+    sent = False
     if request.method == "POST":
         # сохранение формы
         form = EmailPostForm(request.POST)
@@ -74,9 +84,7 @@ def post_share(request, post_id):
             message = 'Посмотри эту статью "{}" тут {}\n\n{}'.format(post.title, post_url, cd['name'])
             send_mail(subject, message, 'email', [cd['to']])
             sent = True
-        else :
-            form = EmailPostForm()
-            return render(request, 'blog/post/share.html',
-                          {'post': post, 'form': form})
-    return render(request, 'blog/post/share.html',
-                  {'post': post, 'sent':sent})
+    else:
+        form = EmailPostForm()
+
+    return render(request, 'blog/post/share.html', {'post': post, 'sent': sent})

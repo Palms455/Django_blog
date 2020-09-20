@@ -13,6 +13,7 @@ from django.contrib.postgres.search import TrigramSimilarity
 
 # Create your views here.
 
+
 def post_list(request, tag_slug=None):
     obj_list = Post.published.all()
     tag = None
@@ -20,7 +21,7 @@ def post_list(request, tag_slug=None):
         # вывод постов по тегам
         tag = get_object_or_404(Tag, slug=tag_slug)
         obj_list = obj_list.filter(tags__in=[tag])
-    paginator = Paginator(obj_list, 3) #разбивка по кол-ву статей на странице
+    paginator = Paginator(obj_list, 3)  # разбивка по кол-ву статей на странице
     page = request.GET.get('page')
     try:
         posts = paginator.page(page)
@@ -29,6 +30,7 @@ def post_list(request, tag_slug=None):
     except EmptyPage:
         posts = paginator.page(paginator.num_pages)
     return render(request, 'blog/post/list.html', {'page': page, 'posts': posts, 'tag': tag})
+
 
 class PosrListView(ListView):
     queryset = Post.published.all()  # или model = Post
@@ -57,18 +59,16 @@ def post_detail(request, year, month, day, post):
         comment_form = CommentForm()
 
     # Формирование списка похожих статей.
-    post_tags_ids = post.tags.values_list('id', flat=True) #список id тегов flat=True - плоский список
+    post_tags_ids = post.tags.values_list('id', flat=True)  # список id тегов flat=True - плоский список
     similar_posts = Post.published.filter(tags__in=post_tags_ids) \
-        .exclude(id=post.id) # получение всех постов с такими тегами, исключая текущий пост
-    similar_posts = similar_posts.annotate(same_tags=Count('tags')) \
-                        .order_by('-same_tags', '-publish')[:4]
+        .exclude(id=post.id)  # получение всех постов с такими тегами, исключая текущий пост
+    similar_posts = similar_posts.annotate(same_tags=Count('tags')).order_by('-same_tags', '-publish')[:4]
     # аггрегация Count для формирования поля same_tags + сортировка в убыв порядке по кол-ву совпад тегов
-    return render(request, 'blog/post/detail.html', {'post' : post,
-                                                     'comments' : comments,
-                                                     'new_comment' : new_comment,
-                                                     'comment_form' : comment_form,
+    return render(request, 'blog/post/detail.html', {'post': post,
+                                                     'comments': comments,
+                                                     'new_comment': new_comment,
+                                                     'comment_form': comment_form,
                                                      'similar_posts': similar_posts})
-
 
 
 def post_share(request, post_id):
@@ -90,7 +90,8 @@ def post_share(request, post_id):
     else:
         form = EmailPostForm()
 
-    return render(request, 'blog/post/share.html', {'post': post, 'sent': sent})
+    return render(request, 'blog/post/share.html', {'post': post, 'sent': sent, 'form': form})
+
 
 def post_search(request):
     form = SearchForm()
@@ -104,7 +105,7 @@ def post_search(request):
         #     search=SearchVector('title', 'body')
         # ).filter(search=query)
         # поиск на присутствуие query по полям title, body
-        #search_vector = SearchVector('title', 'body') # - ранжирование статей по полям
+        # search_vector = SearchVector('title', 'body') # - ранжирование статей по полям
 
         # search_vector = SearchVector('title', weight='A') + SearchVector('body', weight='B')
         # # взвешенный запрос. Совпадение в title будут иметь больштй приоритет, нежели совпадение в body
@@ -119,5 +120,5 @@ def post_search(request):
             ).filter(similarity__gt=0.3).order_by('-similarity')
 
     return render(request, 'blog/post/search.html', {'form': form,
-                                                         'query': query,
-                                                         'results': results})
+                                                     'query': query,
+                                                     'results': results})

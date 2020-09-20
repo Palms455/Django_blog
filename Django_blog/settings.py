@@ -41,7 +41,10 @@ INSTALLED_APPS = [
     'taggit',
 
     'django.contrib.sites',
-    'django.contrib.sitemaps'
+    'django.contrib.sitemaps',
+    
+    'django.contrib.postgres',  # полнотекстовый поиск на postgres c помощью search
+    # Post.objects.filter(body__search='django')
 ]
 
 MIDDLEWARE = [

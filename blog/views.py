@@ -7,7 +7,7 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.views.generic import ListView
 from .forms import EmailPostForm, CommentForm, SearchForm
 from django.core.mail import send_mail
-from django.contrib.postgres.search import SearchVector
+from django.contrib.postgres.search import SearchVector, SearchQuery, SearchRank
 
 
 # Create your views here.
@@ -99,11 +99,17 @@ def post_search(request):
         form = SearchForm(request.GET)
     if form.is_valid():
         query = form.cleaned_data['query']
-        results = Post.objects.annotate(
-            search=SearchVector('title', 'body')
-        ).filter(search=query)
+        # results = Post.objects.annotate(
+        #     search=SearchVector('title', 'body')
+        # ).filter(search=query)
         # поиск на присутствуие query по полям title, body
-
+        #search_vector = SearchVector('title', 'body') # - ранжирование статей по полям
+        search_vector = SearchVector('title', weight='A') + SearchVector('body', weight='B')
+        # взвешенный запрос. Совпадение в title будут иметь больштй приоритет, нежели совпадение в body
+        # A = 1, B = 0.4, C = 0.2, D = 0.1
+        search_query = SearchQuery(query)
+        results = Post.objects.annotate(search=search_vector, rank=SearchRank(search_vector, search_query)
+                                        ).filter(rank__gte=0.3).order_by('-rank')
     return render(request, 'blog/post/search.html', {'form': form,
                                                          'query': query,
                                                          'results': results})
